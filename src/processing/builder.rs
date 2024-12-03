@@ -936,9 +936,7 @@ impl<'a> PresentationBuilder<'a> {
 
         let operations = mem::take(&mut self.chunk_operations);
         let mutators = mem::take(&mut self.chunk_mutators);
-        if !(self.slide_state.last_chunk_ended_in_list && self.options.bookend_incremental_lists) {
-            self.slide_chunks.push(SlideChunk::new(operations, mutators));
-        }
+        self.slide_chunks.push(SlideChunk::new(operations, mutators));
 
         let chunks = mem::take(&mut self.slide_chunks);
         let slide = SlideBuilder::default().chunks(chunks).footer(footer).build();
