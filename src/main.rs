@@ -145,6 +145,7 @@ fn make_builder_options(config: &Config, mode: &PresentMode, force_default_theme
         command_prefix: config.options.command_prefix.clone().unwrap_or_default(),
         image_attribute_prefix: config.options.image_attributes_prefix.clone().unwrap_or_else(|| "image:".to_string()),
         incremental_lists: config.options.incremental_lists.unwrap_or_default(),
+        bookend_incremental_lists: config.options.bookend_incremental_lists.unwrap_or_default(),
         force_default_theme,
         end_slide_shorthand: config.options.end_slide_shorthand.unwrap_or_default(),
         print_modal_background: false,

@@ -60,6 +60,7 @@ pub struct PresentationBuilderOptions {
     pub command_prefix: String,
     pub image_attribute_prefix: String,
     pub incremental_lists: bool,
+    pub bookend_incremental_lists: bool,
     pub force_default_theme: bool,
     pub end_slide_shorthand: bool,
     pub print_modal_background: bool,
@@ -72,6 +73,7 @@ impl PresentationBuilderOptions {
     fn merge(&mut self, options: OptionsConfig) {
         self.implicit_slide_ends = options.implicit_slide_ends.unwrap_or(self.implicit_slide_ends);
         self.incremental_lists = options.incremental_lists.unwrap_or(self.incremental_lists);
+        self.bookend_incremental_lists = options.bookend_incremental_lists.unwrap_or(self.bookend_incremental_lists);
         self.end_slide_shorthand = options.end_slide_shorthand.unwrap_or(self.end_slide_shorthand);
         self.strict_front_matter_parsing =
             options.strict_front_matter_parsing.unwrap_or(self.strict_front_matter_parsing);
@@ -92,6 +94,7 @@ impl Default for PresentationBuilderOptions {
             command_prefix: String::default(),
             image_attribute_prefix: "image:".to_string(),
             incremental_lists: false,
+            bookend_incremental_lists: false,
             force_default_theme: false,
             end_slide_shorthand: false,
             print_modal_background: false,
@@ -619,12 +622,16 @@ impl<'a> PresentationBuilder<'a> {
         };
 
         let incremental_lists = self.slide_state.incremental_lists.unwrap_or(self.options.incremental_lists);
+        let bookend_incremental_lists = self.options.bookend_incremental_lists;
         let iter = ListIterator::new(list, start_index);
         for (index, item) in iter.enumerate() {
-            if index > 0 && incremental_lists {
+            if (index > 0 && incremental_lists) || bookend_incremental_lists {
                 self.process_pause();
             }
             self.push_list_item(item.index, item.item);
+        }
+        if bookend_incremental_lists {
+            self.process_pause();
         }
     }
 
@@ -929,7 +936,9 @@ impl<'a> PresentationBuilder<'a> {
 
         let operations = mem::take(&mut self.chunk_operations);
         let mutators = mem::take(&mut self.chunk_mutators);
-        self.slide_chunks.push(SlideChunk::new(operations, mutators));
+        if !(self.slide_state.last_chunk_ended_in_list && self.options.bookend_incremental_lists) {
+            self.slide_chunks.push(SlideChunk::new(operations, mutators));
+        }
 
         let chunks = mem::take(&mut self.slide_chunks);
         let slide = SlideBuilder::default().chunks(chunks).footer(footer).build();
